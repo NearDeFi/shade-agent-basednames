@@ -1,4 +1,4 @@
-import { getAccount } from '@neardefi/shade-agent-js';
+import { deriveWorkerAccount, getAccount } from '@neardefi/shade-agent-js';
 
 export default async function kill(req, res) {
     const url = new URL('https://example.com' + req?.url);
@@ -8,8 +8,9 @@ export default async function kill(req, res) {
             killed: false,
         });
     }
+    const accountId = await deriveWorkerAccount();
     // delete ephemeral shade agent account on TEE and return funds to the funding account
-    const account = await getAccount();
+    const account = await getAccount(accountId);
     await account.deleteAccount(process.env.NEAR_FUNDING_ACCOUNT);
 
     res.status(200).json({

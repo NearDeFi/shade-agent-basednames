@@ -47,6 +47,10 @@ export async function uploadImageFromData(data) {
         name,
         description,
         image: `ipfs://${fileCID}`,
+        content: {
+            mime: 'image/jpeg',
+            uri: `ipfs://${fileCID}`,
+        },
         properties: {
             category: 'social',
         },

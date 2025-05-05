@@ -25,7 +25,9 @@ export function addOneSecond(ts) {
     return ts
         ? new Date(
               new Date(ts).getTime() + 1000, // add 1 second
-          ).toISOString()
+          )
+              .toISOString()
+              .split('.')[0] + 'Z'
         : undefined;
 }
 

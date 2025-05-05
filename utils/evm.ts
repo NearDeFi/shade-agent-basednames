@@ -1,4 +1,4 @@
-import { ethers } from 'ethers';
+import { ethers, hexlify } from 'ethers';
 import {
     networkId,
     contractCall,
@@ -118,6 +118,8 @@ export const evm = {
     getBalance: ({ address }) => getProvider().getBalance(address),
     formatBalance: (balance) => ethers.formatEther(balance),
     getTransactionReceipt: (hash) => getProvider().getTransactionReceipt(hash),
+    getLogs: (args) => getProvider().send('eth_getLogs', [args]),
+    hexlify: (args) => ethers.hexlify(args),
 
     // custom methods for zora coin creation
 
