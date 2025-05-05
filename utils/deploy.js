@@ -7,7 +7,7 @@ const { Near, Account, KeyPair, keyStores } = nearAPI;
 
 const networkId = 'mainnet';
 const accountId = process.env.NEAR_ACCOUNT_ID;
-const contractId = process.env.NEAR_CONTRACT_ID;
+const contractId = process.env.NEXT_PUBLIC_contractId;
 
 const { secretKey } = parseSeedPhrase(process.env.NEAR_SEED_PHRASE);
 const keyStore = new keyStores.InMemoryKeyStore();
@@ -73,10 +73,9 @@ const deploy = async () => {
     console.log('initRes', initRes);
 
     await sleep(1000);
-
     // NEEDS TO MATCH docker-compose.yaml CODEHASH
     const codehash =
-        '61923f6f77b607c96420d253e4eaa0764a125728cbe501a95c4477cb2a5e2351';
+        '5de11126705a940a878a47417377aec97c843b6ffa9bf2716d6ca9b32565e9ed';
     account = getAccount(accountId);
     const approveRes = await account.functionCall({
         contractId,

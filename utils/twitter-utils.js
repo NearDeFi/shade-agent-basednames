@@ -14,6 +14,11 @@ export async function getClient() {
     return client;
 }
 
+// generate a url for a username + tweet.id
+
+export const tweetUrl = (username, id) =>
+    `https://x.com/${username}/status/${id}`;
+
 // take a tweet timestamp and add 1 second so you can use this as your new start time and don't re-read tweets
 
 export function addOneSecond(ts) {
@@ -52,7 +57,9 @@ async function refreshAccessToken() {
         accessToken = newAccessToken;
         refreshToken = newRefreshToken;
         console.log('newAccessToken', newAccessToken);
-        console.log('newRefreshToken', newRefreshToken);
+        console.log('NEW REFRESH TOKEN', newRefreshToken);
+        console.log('NEW REFRESH TOKEN', newRefreshToken);
+        console.log('NEW REFRESH TOKEN', newRefreshToken);
     } catch (e) {
         console.log('error refreshAccessToken');
         console.log(e);

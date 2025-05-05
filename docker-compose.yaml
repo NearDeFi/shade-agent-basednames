@@ -1,6 +1,14 @@
 services:
     web:
         environment:
+            TWITTER_LAST_TIMESTAMP: ${TWITTER_LAST_TIMESTAMP}
+            NEAR_FUNDING_ACCOUNT: ${NEAR_FUNDING_ACCOUNT}
+            NEXT_PUBLIC_contractId: ${NEXT_PUBLIC_contractId}
+            PINATA_API_KEY: ${PINATA_API_KEY}
+            PINATA_API_SECRET: ${PINATA_API_SECRET}
+            PINATA_API_JWT: ${PINATA_API_JWT}
+            PINATA_API_GATEWAY: ${PINATA_API_GATEWAY}
+            OPENAI_KEY: ${OPENAI_KEY}
             BASE_API_KEY: ${BASE_API_KEY}
             TWITTER_API_KEY: ${TWITTER_API_KEY}
             TWITTER_API_SECRET: ${TWITTER_API_SECRET}
@@ -8,13 +16,11 @@ services:
             TWITTER_CLIENT_SECRET: ${TWITTER_CLIENT_SECRET}
             TWITTER_ACCESS_TOKEN: ${TWITTER_ACCESS_TOKEN}
             TWITTER_REFRESH_TOKEN: ${TWITTER_REFRESH_TOKEN}
-            TWITTER_LAST_TIMESTAMP: ${TWITTER_LAST_TIMESTAMP}
-            NEXT_PUBLIC_contractId: ${NEXT_PUBLIC_contractId}
             MPC_PUBLIC_KEY_TESTNET: ${MPC_PUBLIC_KEY_TESTNET}
             MPC_PUBLIC_KEY_MAINNET: ${MPC_PUBLIC_KEY_MAINNET}
             RESTART_PASS: ${RESTART_PASS}
         platform: linux/amd64 # Explicitly set for TDX
-        image: mattdlockyer/shade-agent-basednames:latest@sha256:61923f6f77b607c96420d253e4eaa0764a125728cbe501a95c4477cb2a5e2351
+        image: mattdlockyer/zoracoin-agent:latest@sha256:5de11126705a940a878a47417377aec97c843b6ffa9bf2716d6ca9b32565e9ed
         container_name: web
         ports:
             - '3000:3000'

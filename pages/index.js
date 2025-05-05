@@ -91,9 +91,9 @@ export default function Home() {
                             <br />
                             <br />
                             balance:{' '}
-                            {balance
+                            {balance?.available
                                 ? formatNearAmount(balance.available, 4)
-                                : 0}
+                                : '0'}
                         </p>
                     </div>
 
