@@ -45,7 +45,7 @@ const NO_REPLY = false;
 // LEAVE THIS ON IN PRODUCTION
 const USE_START_TIME = true;
 let lastTweetTimestamp =
-    process.env.TWITTER_LAST_TIMESTAMP || '2025-05-04T14:21:27.655Z';
+    process.env.TWITTER_LAST_TIMESTAMP || '2025-05-05T20:18:26.000Z';
 
 // queues
 const PENDING_BANKR_ADDRESSES_DELAY = 2000;
@@ -283,6 +283,7 @@ async function getBankrAddresses(data) {
     );
     if (!res) {
         console.log('X ERROR: cannot send @bankrbot address tweet');
+        return;
     }
     const bankrReply = res.data;
     // store created_at here so we can time bankrbot reply search
@@ -459,7 +460,9 @@ export default async function zoracoin(req, res) {
     }
 
     // store for next search start_time
-    lastTweetTimestamp = latestValidTimestamp;
+    if (latestValidTimestamp) {
+        lastTweetTimestamp = latestValidTimestamp;
+    }
 
     // start processing mint, stagger start bc of tweets to bankrbot
     candidates.forEach((c, i) =>

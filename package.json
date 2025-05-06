@@ -1,4 +1,5 @@
 {
+    "type": "module",
     "private": true,
     "scripts": {
         "deploy:contract": "cd contract && cargo near build non-reproducible-wasm && cd .. && node ./utils/deploy.js",

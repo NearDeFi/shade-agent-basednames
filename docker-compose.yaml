@@ -20,7 +20,7 @@ services:
             MPC_PUBLIC_KEY_MAINNET: ${MPC_PUBLIC_KEY_MAINNET}
             RESTART_PASS: ${RESTART_PASS}
         platform: linux/amd64 # Explicitly set for TDX
-        image: mattdlockyer/zoracoin-agent:latest@sha256:f9689cd730cee7b92562492adb0f49a9b215c2b442d299bbe9df90d85b1f28c9
+        image: mattdlockyer/zoracoin-agent:latest@sha256:53df9cf6dba4f591bf82a0bf06f0c346da7c791fcda76ae97d0d05103bfd14b0
         container_name: web
         ports:
             - '3000:3000'
