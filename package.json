@@ -2,7 +2,8 @@
     "type": "module",
     "private": true,
     "scripts": {
-        "deploy:contract": "cd contract && cargo near build non-reproducible-wasm && cd .. && node ./utils/deploy.js",
+        "build:contract": "cd contract && RUSTFLAGS='-C link-arg=--enable-bulk-memory' cargo near build non-reproducible-wasm&& cd ..",
+        "deploy:contract": "node ./utils/deploy.js",
         "test:contract": "cd contract && cargo near build non-reproducible-wasm && cd .. && ava ./tests/test.js --serial --timeout 30s",
         "dev": "next dev",
         "build": "next build",
@@ -35,7 +36,7 @@
         "next": "latest",
         "next-auth": "^4.24.11",
         "openai": "^4.96.0",
-        "pinata": "^2.2.1",
+        "pinata": "^2.2.2",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
         "twitter-api-v2": "^1.22.0"

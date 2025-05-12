@@ -35,13 +35,13 @@ const BEFORE_ADDRESS_HEX =
 const TEST_GETLOGS = false;
 // check deployZora method for how these work
 const TEST_METADATA = false;
-const TEST_PINATA = false;
+const TEST_PINATA = true;
 const TEST_DEPLOY = false;
 // if you have a tweet to bankrbot that needs testing for reply and address extraction
 const TEST_BANKR_REPLY = false;
 // MAKE TRUE IF DOING ISOLATED TESTING
-const NO_SEARCH = false;
-const NO_REPLY = false;
+const NO_SEARCH = true;
+const NO_REPLY = true;
 // LEAVE THIS ON IN PRODUCTION
 const USE_START_TIME = true;
 let lastTweetTimestamp =
@@ -59,7 +59,7 @@ const getCoinAddressFromLogs = async (
 ) => {
     if (!block && !!hash) {
         const receipt = await evm.getTransactionReceipt(hash);
-        block = receipt.blockNumber;
+        block = receipt?.blockNumber;
     }
     const fromBlock = block;
     const toBlock = block;
@@ -159,7 +159,6 @@ async function deployZora(data) {
         symbol,
         minter: minterAddress,
         creator: creatorAddress,
-        address,
         uri,
     });
 
@@ -385,19 +384,18 @@ export default async function zoracoin(req, res) {
                 // default to tweet text as content
                 let mintData = creatorTweet.text;
                 if (firstMedia === undefined) {
-                    console.log('no media for tweet, using tweet text');
                     // DISCARD
-                    // WHY? creatorTweet is only text and includes the SEARCH TERM
-                    const replied_to = creatorTweet.referenced_tweets.filter(
-                        (t) => t.type === 'replied_to',
-                    )?.[0]?.id;
                     if (
-                        typeof replied_to === 'string' &&
-                        /mint it/gim.test(creatorTweet.text)
+                        creatorTweet.text.indexOf(BOT_USERNAME) > -1 &&
+                        creatorTweet.text.indexOf(SEARCH_TERM) > -1
                     ) {
-                        console.log('creator tweet is another "mint it" reply');
+                        console.log(
+                            `DISCARDING: creator tweet potentially another ${BOT_USERNAME} "${SEARCH_TERM}" tweet.`,
+                        );
                         continue;
                     }
+                    console.log('NO MEDIA: for tweet, using tweet text');
+                    creatorTweet.mintData = creatorTweet.text;
                 } else {
                     creatorTweet.imageUrl = firstMedia.url;
                     // mint anything with media
@@ -454,7 +452,7 @@ export default async function zoracoin(req, res) {
                 minterTweet,
             });
         } catch (e) {
-            console.log('problem getting data from tweet');
+            console.log('problem with tweet', e);
             // TODO reply to minterTweet
         }
     }
