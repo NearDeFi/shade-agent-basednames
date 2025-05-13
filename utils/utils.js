@@ -19,5 +19,5 @@ export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export const sleepThen = async (dur, fn) => {
     await sleep(dur);
-    fn();
+    return fn();
 };

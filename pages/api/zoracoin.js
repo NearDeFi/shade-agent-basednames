@@ -35,13 +35,13 @@ const BEFORE_ADDRESS_HEX =
 const TEST_GETLOGS = false;
 // check deployZora method for how these work
 const TEST_METADATA = false;
-const TEST_PINATA = true;
+const TEST_PINATA = false;
 const TEST_DEPLOY = false;
 // if you have a tweet to bankrbot that needs testing for reply and address extraction
 const TEST_BANKR_REPLY = false;
 // MAKE TRUE IF DOING ISOLATED TESTING
-const NO_SEARCH = true;
-const NO_REPLY = true;
+const NO_SEARCH = false;
+const NO_REPLY = false;
 // LEAVE THIS ON IN PRODUCTION
 const USE_START_TIME = true;
 let lastTweetTimestamp =
@@ -50,6 +50,7 @@ let lastTweetTimestamp =
 // queues
 const PENDING_BANKR_ADDRESSES_DELAY = 2000;
 const pendingBankrReply = [];
+let evmBusy = false;
 
 // main endpoint for cron job is at the bottom and the flow works it's way up
 
@@ -150,34 +151,51 @@ async function deployZora(data) {
         chain: 'evm',
     });
 
-    // TESTING get logs for zora hash
-
-    const { hash, tx, explorerLink } = await evm.deployZora({
-        path,
-        name,
-        address,
-        symbol,
-        minter: minterAddress,
-        creator: creatorAddress,
-        uri,
-    });
+    // ONLY 1 EVM ACCOUNT - NEED TO WAIT FOR NONCE INCREMENT
+    const tryDeployZora = async () => {
+        if (!evmBusy) {
+            evmBusy = true;
+            const zoraRes = await evm.deployZora({
+                path,
+                name,
+                address,
+                symbol,
+                minter: minterAddress,
+                creator: creatorAddress,
+                uri,
+            });
+            evmBusy = false;
+            return zoraRes;
+        }
+        // sleep for 1 min then try deploy zora again
+        return sleepThen(60000, tryDeployZora);
+    };
+    const { hash, tx, explorerLink } = await tryDeployZora();
 
     // generate last tweet in conversation thread
     // find new coin address from tx (if possible)
     const coinAddress = await getCoinAddressFromLogs(hash, tx.blockNumber);
-    const lastTweet = await getLatestConversationTweet(
+    let lastTweet = await getLatestConversationTweet(
         await getClient(),
         data.creatorTweet.id,
     );
     console.log('lastTweet', lastTweet);
+
+    if (!lastTweet) {
+        console.log(
+            'ERROR: getting lastTweet from converstion, using bankrTweet',
+        );
+        lastTweet = data.bankrTweet;
+    }
+
     if (coinAddress) {
         await replyToTweet(
-            `Coined it!\nhttps://zora.co/coin/base:${coinAddress}\nToken name: ${name} \nSymbol: ${symbol}!`,
+            `Coined it!\nhttps://zora.co/coin/base:${coinAddress}\nToken name: ${name} \nSymbol: ${symbol}`,
             lastTweet.id,
         );
     } else {
         await replyToTweet(
-            `Coined it!\n${explorerLink}\nToken name: ${name} \nSymbol: ${symbol}!`,
+            `Coined it!\n${explorerLink}\nToken name: ${name} \nSymbol: ${symbol}`,
             lastTweet.id,
         );
     }
@@ -250,6 +268,8 @@ async function processBankrReply() {
 
         data.creatorTweet.address = addresses[0];
         data.minterTweet.address = addresses[1];
+
+        data.bankrTweet = tweet;
 
         deployZora(data);
     } catch (e) {

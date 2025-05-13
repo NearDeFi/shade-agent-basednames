@@ -18,6 +18,12 @@ export async function getMetadata(data) {
         ).toUpperCase();
     }
 
+    // set default description but use creatorTweet.text if it's reasonable
+    let description = `Zora X Mint. Created by @${creator}. Minted by @${minter}.`;
+    if (data.creatorTweet.text.length > 1) {
+        description = data.creatorTweet.text;
+    }
+
     data.metadata = {
         minter,
         creator,
@@ -25,7 +31,7 @@ export async function getMetadata(data) {
         symbol,
         minterAddress: data.minterTweet.address,
         creatorAddress: data.creatorTweet.address,
-        description: `Basednames X Mint. Created by @${creator}. Minted by @${minter}.`,
+        description,
     };
 
     return data.metadata;

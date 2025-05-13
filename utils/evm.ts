@@ -472,34 +472,49 @@ export const evm = {
     // completes evm transaction calling NEAR smart contract get_signature method of shade agent
     // only a registered shade agent should be able to call this to generate signatures for the OTA deposit accounts we replied to users with
     completeEthereumTx: async ({ baseTx, path }) => {
-        const { chainId } = evm;
+        try {
+            const { chainId } = evm;
 
-        console.log('networkId', networkId);
-        console.log('baseTx', baseTx);
+            console.log('networkId', networkId);
+            console.log('baseTx', baseTx);
 
-        // create hash of unsigned TX to sign -> payload
-        const tx = ethers.Transaction.from(baseTx);
-        const hexPayload = ethers.keccak256(
-            ethers.getBytes(tx.unsignedSerialized),
-        );
-        const serializedTxHash = Buffer.from(hexPayload.substring(2), 'hex');
+            // create hash of unsigned TX to sign -> payload
+            const tx = ethers.Transaction.from(baseTx);
+            const hexPayload = ethers.keccak256(
+                ethers.getBytes(tx.unsignedSerialized),
+            );
+            const serializedTxHash = Buffer.from(
+                hexPayload.substring(2),
+                'hex',
+            );
 
-        // get the signature from the NEAR contract
-        const sigRes = await contractCall({
-            accountId: undefined,
-            methodName: 'get_signature',
-            args: {
-                payload: [...serializedTxHash],
-                path,
-            },
-        });
+            // get the signature from the NEAR contract
+            const sigRes = await contractCall({
+                accountId: undefined,
+                methodName: 'get_signature',
+                args: {
+                    payload: [...serializedTxHash],
+                    path,
+                },
+            });
 
-        const signature = evm.parseSignature(sigRes, chainId, serializedTxHash);
-        // add signature to base transaction
-        tx.signature = signature;
-        const serializedTx = tx.serialized;
+            const signature = evm.parseSignature(
+                sigRes,
+                chainId,
+                serializedTxHash,
+            );
+            // add signature to base transaction
+            tx.signature = signature;
+            const serializedTx = tx.serialized;
 
-        return await evm.broadcastTransaction(serializedTx);
+            return await evm.broadcastTransaction(serializedTx);
+        } catch (error) {
+            console.error('Error in basename registration handler:', error);
+            return {
+                success: false,
+                error: error.message,
+            };
+        }
     },
 
     // completes evm transaction by calling the NEAR MPC contract directly
@@ -565,9 +580,8 @@ export const evm = {
     broadcastTransaction: async (serializedTx, second = false) => {
         console.log('BROADCAST serializedTx', serializedTx);
 
-        const provider = await getProvider();
-
         try {
+            const provider = await getProvider();
             const hash = await provider.send('eth_sendRawTransaction', [
                 serializedTx,
             ]);
