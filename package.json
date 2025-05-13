@@ -1,5 +1,4 @@
 {
-    "type": "module",
     "private": true,
     "scripts": {
         "build:contract": "cd contract && RUSTFLAGS='-C link-arg=--enable-bulk-memory' cargo near build non-reproducible-wasm&& cd ..",

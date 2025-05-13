@@ -10,7 +10,7 @@ export async function genMetadata(tweetText, tweetImage) {
             'Choose a cryptocurrency token name and symbol that reflect the text (and optional image) from a tweet submitted by the user prompt. Use a unique word or phrase that appears in the tweet for the name, consider the image content, when available, if there is not enough text in the tweet. Create an abbreviation for the symbol (or whole word if short enough), max length 3-4 characters and uppercase. Output in JSON: {name: <name>, symbol: <symbol>}';
 
         const completion = await openai.chat.completions.create({
-            model: 'google/gemini-2.5-pro-preview-03-25',
+            model: 'openai/o4-mini',
             messages: [
                 {
                     role: 'system',

@@ -12,17 +12,17 @@ import {
 import { getMetadata, pinataUpload } from '../../utils/pinata';
 
 // !!! CONFIG CHECK BEFORE DEPLOY TO PHALA !!!
-const BOT_USERNAME = '@proximityagent';
+const BOT_USERNAME = process.env.BOT_USERNAME || '@coinitup';
 const SEARCH_TERM = '"coin"';
 const BANKR_BOT_ID = '1864452692221022210';
 // limit X usernames allowed to coin it
-const ALLOWED_USERNAMES = [
-    'mattdlockyer',
-    'miaojiang',
-    'kendaIIc',
-    'EdsonAlcala',
-    'ThePiVortex',
-];
+// const ALLOWED_USERNAMES = [
+//     'mattdlockyer',
+//     'miaojiang',
+//     'kendaIIc',
+//     'EdsonAlcala',
+//     'ThePiVortex',
+// ];
 // for filtering logs
 
 const ZORA_CONTRACT = '0x777777751622c0d3258f214F9DF38E35BF45baF3'; // zora contract
@@ -167,8 +167,8 @@ async function deployZora(data) {
             evmBusy = false;
             return zoraRes;
         }
-        // sleep for 1 min then try deploy zora again
-        return sleepThen(60000, tryDeployZora);
+        // sleep for 30s then try deploy zora again
+        return sleepThen(30000, tryDeployZora);
     };
     const { hash, tx, explorerLink } = await tryDeployZora();
 
