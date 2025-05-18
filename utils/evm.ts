@@ -219,7 +219,7 @@ export const evm = {
                 value: 0n,
             };
 
-            console.log(baseTx);
+            // console.log(baseTx);
 
             console.log('Attempting Signature for Address:', address);
             const balance = await evm.getBalance({ address });
@@ -475,8 +475,8 @@ export const evm = {
         try {
             const { chainId } = evm;
 
-            console.log('networkId', networkId);
-            console.log('baseTx', baseTx);
+            console.log('completeEthereumTx networkId', networkId);
+            // console.log('baseTx', baseTx);
 
             // create hash of unsigned TX to sign -> payload
             const tx = ethers.Transaction.from(baseTx);
@@ -587,9 +587,8 @@ export const evm = {
             ]);
             const tx = await provider.waitForTransaction(hash as any, 1);
 
-            console.log('SUCCESS! TX:', tx);
-            console.log('SUCCESS! TX HASH:', hash);
-            console.log(`Explorer Link: ${evm.explorer}/tx/${hash}`);
+            console.log('SUCCESS TX HASH:', hash);
+            console.log(`EXPLORER LINK: ${evm.explorer}/tx/${hash}`);
 
             return {
                 success: true,

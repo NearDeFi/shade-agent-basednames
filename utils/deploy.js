@@ -52,7 +52,7 @@ const deploy = async () => {
 
     await sleep(1000);
 
-    const file = fs.readFileSync('./contract/target/near/contract.wasm');
+    const file = fs.readFileSync('./contract/contract.wasm');
     let account = getAccount(contractId);
     await account.deployContract(file);
     console.log('deployed bytes', file.byteLength);
@@ -75,7 +75,7 @@ const deploy = async () => {
     await sleep(1000);
     // NEEDS TO MATCH docker-compose.yaml CODEHASH
     const codehash =
-        'b671058c69fbc75348e2f16ef92b66fa05226a230b3f3bf7196959bc8f3a6f76';
+        '099782f5d445e5f67055fefb583076db58320db108c081fa478018321ddcc914';
     account = getAccount(accountId);
     const approveRes = await account.functionCall({
         contractId,

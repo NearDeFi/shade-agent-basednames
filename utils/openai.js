@@ -18,20 +18,20 @@ export async function genMetadata(tweetText, tweetImage) {
                 },
                 {
                     role: 'user',
-                    content: [
-                        {
-                            type: 'text',
-                            text: tweetText,
-                        },
-                        tweetImage
-                            ? {
+                    content: tweetImage
+                        ? [
+                              {
+                                  type: 'text',
+                                  text: tweetText,
+                              },
+                              {
                                   type: 'image_url',
                                   image_url: {
                                       url: tweetImage,
                                   },
-                              }
-                            : undefined,
-                    ],
+                              },
+                          ]
+                        : tweetText,
                 },
             ],
         });

@@ -1,6 +1,7 @@
 services:
     web:
         environment:
+            BOT_USERNAME: ${BOT_USERNAME}
             TWITTER_LAST_TIMESTAMP: ${TWITTER_LAST_TIMESTAMP}
             NEAR_FUNDING_ACCOUNT: ${NEAR_FUNDING_ACCOUNT}
             NEXT_PUBLIC_contractId: ${NEXT_PUBLIC_contractId}
@@ -20,7 +21,7 @@ services:
             MPC_PUBLIC_KEY_MAINNET: ${MPC_PUBLIC_KEY_MAINNET}
             RESTART_PASS: ${RESTART_PASS}
         platform: linux/amd64 # Explicitly set for TDX
-        image: mattdlockyer/zoracoin-agent:latest@sha256:b671058c69fbc75348e2f16ef92b66fa05226a230b3f3bf7196959bc8f3a6f76
+        image: mattdlockyer/zoracoin-agent:latest@sha256:099782f5d445e5f67055fefb583076db58320db108c081fa478018321ddcc914
         container_name: web
         ports:
             - '3000:3000'

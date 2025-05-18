@@ -48,7 +48,7 @@ let lastTweetTimestamp =
     process.env.TWITTER_LAST_TIMESTAMP || '2025-05-05T20:18:26.000Z';
 
 // queues
-const PENDING_BANKR_ADDRESSES_DELAY = 2000;
+const PENDING_BANKR_ADDRESSES_DELAY = 5000;
 const pendingBankrReply = [];
 let evmBusy = false;
 
@@ -77,7 +77,7 @@ const getCoinAddressFromLogs = async (
         );
 
         let log = res.result.filter((r) => r.transactionHash === hash)[0];
-        console.log('getCoinAddressFromLogs res.result log filter', log);
+        console.log('getCoinAddressFromLogs res.result log filter');
 
         // try eth_getLogs
         if (!log) {
@@ -179,7 +179,6 @@ async function deployZora(data) {
         await getClient(),
         data.creatorTweet.id,
     );
-    console.log('lastTweet', lastTweet);
 
     if (!lastTweet) {
         console.log(
@@ -187,6 +186,15 @@ async function deployZora(data) {
         );
         lastTweet = data.bankrTweet;
     }
+
+    if (!lastTweet) {
+        console.log(
+            'ERROR: no bankrTweet, using minterTweet and then creatorTweet as fallbacks',
+        );
+        lastTweet = data.minterTweet || data.creatorTweet;
+    }
+
+    console.log('reply tweet ID', lastTweet.id);
 
     if (coinAddress) {
         await replyToTweet(
@@ -199,6 +207,7 @@ async function deployZora(data) {
             lastTweet.id,
         );
     }
+    console.log('FINAL TWEET SENT');
 }
 
 if (TEST_METADATA || TEST_PINATA || TEST_DEPLOY) {
@@ -221,49 +230,56 @@ if (TEST_METADATA || TEST_PINATA || TEST_DEPLOY) {
 // this queue is for processing replies from @bankrbot after we asked it for 2 evm addresses
 
 async function processBankrReply() {
-    const data = pendingBankrReply.shift();
-    if (!data) {
-        return sleepThen(PENDING_BANKR_ADDRESSES_DELAY, processBankrReply);
-    }
-    const timeDiffMins =
-        (new Date() - new Date(data.bankrReply.created_at)) / 60000;
-    // bail after waiting 15 minutes for bankrbot
-    if (timeDiffMins > 15) {
+    try {
+        // log that this loop is active, but no more than once per minute
+        const currentSeconds = new Date().getSeconds();
+        if (currentSeconds < 5) {
+            console.log('processBankrReply');
+        }
+        // get latest data from pending bankr replies
+        const data = pendingBankrReply.shift();
+        if (!data) {
+            return sleepThen(PENDING_BANKR_ADDRESSES_DELAY, processBankrReply);
+        }
+        // warning but this does work in prod
+        const timeDiffMins =
+            (new Date() - new Date(data.bankrReply.created_at)) / 60000;
+        // bail after waiting 15 minutes for bankrbot
+        if (timeDiffMins > 15) {
+            console.log(
+                'TIMEOUT: exceeded 15m for @bankrbot reply to tweet:',
+                tweetUrl(BOT_USERNAME, data.bankrReply.id),
+            );
+            return sleepThen(PENDING_BANKR_ADDRESSES_DELAY, processBankrReply);
+        }
+        // only start searching for tweets after 1 minute (give bankrbot time)
+        if (timeDiffMins < 1) {
+            pendingBankrReply.push(data);
+            return sleepThen(PENDING_BANKR_ADDRESSES_DELAY, processBankrReply);
+        }
+
         console.log(
-            'TIMEOUT: exceeded 15m for @bankrbot reply to tweet:',
+            'waiting on @bankrbot reply to tweet:',
             tweetUrl(BOT_USERNAME, data.bankrReply.id),
         );
-        return sleepThen(PENDING_BANKR_ADDRESSES_DELAY, processBankrReply);
-    }
-    // only start searching for tweets after 1 minute (give bankrbot time)
-    if (timeDiffMins < 1) {
-        pendingBankrReply.push(data);
-        return sleepThen(PENDING_BANKR_ADDRESSES_DELAY, processBankrReply);
-    }
+        const tweet = await getReplyToTweetFromAuthor(
+            await getClient(),
+            data.bankrReply.id,
+            BANKR_BOT_ID,
+        );
+        // no tweet yet keep searching
+        if (!tweet) {
+            pendingBankrReply.push(data);
+            return sleepThen(PENDING_BANKR_ADDRESSES_DELAY, processBankrReply);
+        }
 
-    console.log(
-        'waiting on @bankrbot reply to tweet:',
-        tweetUrl(BOT_USERNAME, data.bankrReply.id),
-    );
-    const tweet = await getReplyToTweetFromAuthor(
-        await getClient(),
-        data.bankrReply.id,
-        BANKR_BOT_ID,
-    );
-    // no tweet yet keep searching
-    if (!tweet) {
-        pendingBankrReply.push(data);
-        return sleepThen(PENDING_BANKR_ADDRESSES_DELAY, processBankrReply);
-    }
-
-    try {
         // parse bankr reply to get addresses
         const addresses = tweet.text.match(/0x[a-fA-F0-9]{40}/gim);
         console.log('@bankrbot replied with addresses:', addresses);
 
         if (addresses.length !== 2) {
             console.log('missing addresses');
-            return;
+            return sleepThen(PENDING_BANKR_ADDRESSES_DELAY, processBankrReply);
         }
 
         data.creatorTweet.address = addresses[0];
@@ -272,12 +288,14 @@ async function processBankrReply() {
         data.bankrTweet = tweet;
 
         deployZora(data);
-    } catch (e) {
-        console.log('problem getting addresses from bankrbot tweet', e);
-    }
 
-    // keep processing queue
-    return sleepThen(PENDING_BANKR_ADDRESSES_DELAY, processBankrReply);
+        // keep processing queue
+        return sleepThen(PENDING_BANKR_ADDRESSES_DELAY, processBankrReply);
+    } catch (e) {
+        console.log('ERROR: processBankrReply:', e);
+        // keep processing queue
+        return sleepThen(PENDING_BANKR_ADDRESSES_DELAY, processBankrReply);
+    }
 }
 if (TEST_BANKR_REPLY) {
     // this will error in the try catch above because there's no creatorTweet object (ok for testing this case only)
@@ -291,29 +309,33 @@ if (TEST_BANKR_REPLY) {
 processBankrReply();
 
 async function getBankrAddresses(data) {
-    if (NO_REPLY) {
-        return console.log({ NO_REPLY });
-    }
+    try {
+        if (NO_REPLY) {
+            return console.log({ NO_REPLY });
+        }
 
-    const minterTweetId = data.minterTweet.id;
-    const res = await replyToTweet(
-        `@bankrbot what are the Base addresses for @${data.creatorTweet.username} and @${data.minterTweet.username}?`,
-        minterTweetId,
-    );
-    if (!res) {
-        console.log('X ERROR: cannot send @bankrbot address tweet');
-        return;
-    }
-    const bankrReply = res.data;
-    // store created_at here so we can time bankrbot reply search
-    bankrReply.created_at = addOneSecond(new Date().toISOString());
-    console.log('bankrReply', bankrReply);
+        const minterTweetId = data.minterTweet.id;
+        const res = await replyToTweet(
+            `@bankrbot what are the Base addresses for @${data.creatorTweet.username} and @${data.minterTweet.username}?`,
+            minterTweetId,
+        );
+        if (!res) {
+            console.log('X ERROR: cannot send @bankrbot address tweet');
+            return;
+        }
+        const bankrReply = res.data;
+        // store created_at here so we can time bankrbot reply search
+        bankrReply.created_at = addOneSecond(new Date().toISOString());
+        console.log('bankrReply', bankrReply);
 
-    // start looking for bankrReplies
-    pendingBankrReply.push({
-        ...data,
-        bankrReply,
-    });
+        // start looking for bankrReplies
+        pendingBankrReply.push({
+            ...data,
+            bankrReply,
+        });
+    } catch (e) {
+        console.log('ERROR: getBankrAddresses:', e);
+    }
 }
 
 export default async function zoracoin(req, res) {
@@ -324,6 +346,8 @@ export default async function zoracoin(req, res) {
     const client = await getClient();
 
     const start_time = addOneSecond(lastTweetTimestamp);
+
+    console.log(`SEARCH: ${BOT_USERNAME} + ${SEARCH_TERM}`);
 
     const minterTweets = await client.v2.search(
         `${BOT_USERNAME} ${SEARCH_TERM}`,
@@ -403,7 +427,7 @@ export default async function zoracoin(req, res) {
                 // process creatorTweet and store candiate zora mint
                 // default to tweet text as content
                 let mintData = creatorTweet.text;
-                if (firstMedia === undefined) {
+                if (firstMedia?.url === undefined) {
                     // DISCARD
                     if (
                         creatorTweet.text.indexOf(BOT_USERNAME) > -1 &&
@@ -449,16 +473,16 @@ export default async function zoracoin(req, res) {
             minterTweet.username = minterUsername;
             creatorTweet.username = creatorUsername;
 
-            if (
-                ALLOWED_USERNAMES?.length > 0 &&
-                !ALLOWED_USERNAMES.includes(minterTweet.username)
-            ) {
-                console.log(
-                    'ALLOWED_USERNAMES ACTIVE: username not valid:',
-                    minterTweet.username,
-                );
-                continue;
-            }
+            // if (
+            //     ALLOWED_USERNAMES?.length > 0 &&
+            //     !ALLOWED_USERNAMES.includes(minterTweet.username)
+            // ) {
+            //     console.log(
+            //         'ALLOWED_USERNAMES ACTIVE: username not valid:',
+            //         minterTweet.username,
+            //     );
+            //     continue;
+            // }
 
             console.log('candidate found');
             console.log(

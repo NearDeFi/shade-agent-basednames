@@ -4,7 +4,7 @@ const session = require('express-session');
 const { TwitterApi } = require('twitter-api-v2');
 
 const PORT = 3001;
-const CALLBACK = `https://3253-2001-569-5806-f900-b7c3-dbd1-ef16-35c6.ngrok-free.app/api/callback`;
+const CALLBACK = `https://224a-207-219-80-78.ngrok-free.app/api/callback`;
 const app = express();
 
 let cv, s;
